@@ -8,6 +8,8 @@ use std::path::{Path, PathBuf};
 use skia_safe::svg::Dom;
 use skia_safe::textlayout::{FontCollection, ParagraphBuilder, ParagraphStyle, TextStyle, TypefaceFontProvider};
 
+const CANVAS_SIZE: i32 = 512;
+
 #[derive(Parser)]
 struct Cli {
     #[arg(long = "dir")]
@@ -24,6 +26,8 @@ struct Cli {
     draw_svg: bool,
     #[arg(long = "save")]
     save: bool,
+    #[arg(long = "scale", default_value_t = 1)]
+    scale: u8,
 }
 
 fn main() {
@@ -38,16 +42,17 @@ fn main() {
     }
 
     for _ in 0..args.loop_count {
-        performance_test(&args.dir_path, args.draw_path, args.draw_raster, args.draw_text, args.draw_svg, args.save);
+        performance_test(&args.dir_path, args.draw_path, args.draw_raster, args.draw_text, args.draw_svg, args.save, args.scale);
     }
 }
 
-fn performance_test(working_path: &PathBuf, path: bool, raster: bool, text: bool, svg: bool, save: bool) {
-    if let Some(mut surface) = surfaces::raster_n32_premul((2048, 2048)) {
+fn performance_test(working_path: &PathBuf, path: bool, raster: bool, text: bool, svg: bool, save: bool, scale: u8) {
+    if let Some(mut surface) = surfaces::raster_n32_premul((CANVAS_SIZE * scale as i32, CANVAS_SIZE * scale as i32)) {
         let mut paint = Paint::default();
         paint.set_anti_alias(true);
         let canvas = surface.canvas();
         canvas.clear(Color::WHITE);
+        canvas.scale((scale as f32, scale as f32));
         if path {
             draw_path(canvas, &mut paint);
         }
@@ -96,8 +101,8 @@ c23.056,7.628,28.372,22.725,23.418,27.775c-11.748,10.244-18.968,24.765-22.688,40
 C139.916,456.7,196.167,480,256,480C315.832,480,372.084,456.7,414.392,414.393z
     "#;
     canvas.save();
-    canvas.translate((50.0, 50.0));
-    canvas.scale((1.8, 1.8));
+    canvas.translate((12.0, 12.0));
+    canvas.scale((0.45, 0.45));
     if let Some(path) = SkPath::from_svg(path_def) {
         canvas.draw_path(&path, paint);
     }
@@ -106,8 +111,8 @@ C139.916,456.7,196.167,480,256,480C315.832,480,372.084,456.7,414.392,414.393z
 
 fn draw_raster(canvas: &mut Canvas, paint: &mut Paint, raster_path: &PathBuf) {
     canvas.save();
-    canvas.translate((1000.0, 0.0));
-    canvas.scale((0.2, 0.2));
+    canvas.translate((250.0, 0.0));
+    canvas.scale((0.05, 0.05));
     if let Ok(bitmap_data) = data_from_file_path(raster_path) {
         if let Some(bitmap) = Image::from_encoded(bitmap_data) {
             canvas.draw_image(bitmap, (0.0, 0.0), Some(paint));
@@ -129,7 +134,7 @@ fn draw_text(canvas: &mut Canvas, font_path: &PathBuf) {
     let mut style = ParagraphStyle::new();
     let mut text_style = TextStyle::new();
     text_style.set_color(Color::from_rgb(0, 0, 0));
-    text_style.set_font_size(60.0);
+    text_style.set_font_size(15.0);
     text_style.set_font_families(&["Adigiana"]);
     style.set_text_style(&text_style);
     let mut paragraph_builder = ParagraphBuilder::new(&style, font_collection);
@@ -151,15 +156,15 @@ fn draw_text(canvas: &mut Canvas, font_path: &PathBuf) {
     paragraph_builder.add_text("occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\n");
 
     let mut paragraph = paragraph_builder.build();
-    paragraph.layout(900.0);
+    paragraph.layout(225.0);
 
-    paragraph.paint(canvas, (100.0, 1100.0));
+    paragraph.paint(canvas, (25.0, 275.0));
 }
 
 fn draw_svg(canvas: &mut Canvas, svg_path: &PathBuf) {
     canvas.save();
-    canvas.translate((1400.0, 1100.0));
-    canvas.scale((0.9, 0.9));
+    canvas.translate((350.0, 275.0));
+    canvas.scale((0.22, 0.22));
     if let Ok(svg_data) = bytes_from_file_path(svg_path) {
         if let Ok(svg) = Dom::from_bytes(&svg_data) {
             svg.render(canvas);
