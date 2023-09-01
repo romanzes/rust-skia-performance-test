@@ -69,7 +69,8 @@ c23.056,7.628,28.372,22.725,23.418,27.775c-11.748,10.244-18.968,24.765-22.688,40
 C139.916,456.7,196.167,480,256,480C315.832,480,372.084,456.7,414.392,414.393z
     "#;
     canvas.save();
-    canvas.translate((100.0, 100.0));
+    canvas.translate((50.0, 50.0));
+    canvas.scale((1.8, 1.8));
     if let Some(path) = SkPath::from_svg(path_def) {
         canvas.draw_path(&path, paint);
     }
@@ -130,8 +131,8 @@ fn draw_text(canvas: &mut Canvas, font_path: &PathBuf) {
 
 fn draw_svg(canvas: &mut Canvas, svg_path: &PathBuf) {
     canvas.save();
-    canvas.translate((1200.0, 1200.0));
-    canvas.scale((0.5, 0.5));
+    canvas.translate((1400.0, 1100.0));
+    canvas.scale((0.9, 0.9));
     if let Ok(svg_data) = bytes_from_file_path(svg_path) {
         if let Ok(svg) = Dom::from_bytes(&svg_data) {
             svg.render(canvas);
