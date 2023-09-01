@@ -1,13 +1,18 @@
 #![allow(unused)]
 
 use clap::Parser;
-use skia_safe::{surfaces, Canvas, Color, Data, EncodedImageFormat, Paint, Path as SkPath, Surface, Image, Typeface, SamplingOptions, FilterMode, MipmapMode, CubicResampler, Rect};
+use skia_safe::canvas::SrcRectConstraint;
+use skia_safe::svg::Dom;
+use skia_safe::textlayout::{
+    FontCollection, ParagraphBuilder, ParagraphStyle, TextStyle, TypefaceFontProvider,
+};
+use skia_safe::{
+    surfaces, Canvas, Color, CubicResampler, Data, EncodedImageFormat, FilterMode, Image,
+    MipmapMode, Paint, Path as SkPath, Rect, SamplingOptions, Surface, Typeface,
+};
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
-use skia_safe::svg::Dom;
-use skia_safe::textlayout::{FontCollection, ParagraphBuilder, ParagraphStyle, TextStyle, TypefaceFontProvider};
-use skia_safe::canvas::SrcRectConstraint;
 
 const CANVAS_SIZE: i32 = 512;
 
@@ -43,12 +48,30 @@ fn main() {
     }
 
     for _ in 0..args.loop_count {
-        performance_test(&args.dir_path, args.draw_path, args.draw_raster, args.draw_text, args.draw_svg, args.save, args.scale);
+        performance_test(
+            &args.dir_path,
+            args.draw_path,
+            args.draw_raster,
+            args.draw_text,
+            args.draw_svg,
+            args.save,
+            args.scale,
+        );
     }
 }
 
-fn performance_test(working_path: &PathBuf, path: bool, raster: bool, text: bool, svg: bool, save: bool, scale: u8) {
-    if let Some(mut surface) = surfaces::raster_n32_premul((CANVAS_SIZE * scale as i32, CANVAS_SIZE * scale as i32)) {
+fn performance_test(
+    working_path: &PathBuf,
+    path: bool,
+    raster: bool,
+    text: bool,
+    svg: bool,
+    save: bool,
+    scale: u8,
+) {
+    if let Some(mut surface) =
+        surfaces::raster_n32_premul((CANVAS_SIZE * scale as i32, CANVAS_SIZE * scale as i32))
+    {
         let mut paint = Paint::default();
         paint.set_anti_alias(true);
         let canvas = surface.canvas();
@@ -117,7 +140,13 @@ fn draw_raster(canvas: &mut Canvas, paint: &mut Paint, raster_path: &PathBuf) {
     if let Ok(bitmap_data) = data_from_file_path(raster_path) {
         if let Some(bitmap) = Image::from_encoded(bitmap_data) {
             let rect = Rect::from_wh(bitmap.width() as f32, bitmap.height() as f32);
-            canvas.draw_image_rect_with_sampling_options(bitmap, Some((&rect, SrcRectConstraint::Fast)), &rect, SamplingOptions::new(FilterMode::Linear, MipmapMode::Linear), &paint);
+            canvas.draw_image_rect_with_sampling_options(
+                bitmap,
+                Some((&rect, SrcRectConstraint::Fast)),
+                &rect,
+                SamplingOptions::new(FilterMode::Linear, MipmapMode::Linear),
+                &paint,
+            );
         }
     }
     canvas.restore();
@@ -143,16 +172,20 @@ fn draw_text(canvas: &mut Canvas, font_path: &PathBuf) {
     paragraph_builder.add_text("Lorem ipsum dolor sit amet, consectetur adipiscing elit, ");
     text_style.set_color(Color::from_rgb(255, 0, 0));
     paragraph_builder.push_style(&text_style);
-    paragraph_builder.add_text("sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. ");
+    paragraph_builder
+        .add_text("sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. ");
     text_style.set_color(Color::from_rgb(0, 255, 0));
     paragraph_builder.push_style(&text_style);
-    paragraph_builder.add_text("Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut ");
+    paragraph_builder
+        .add_text("Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut ");
     text_style.set_color(Color::from_rgb(0, 0, 255));
     paragraph_builder.push_style(&text_style);
-    paragraph_builder.add_text("aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in ");
+    paragraph_builder
+        .add_text("aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in ");
     text_style.set_color(Color::from_rgb(255, 255, 0));
     paragraph_builder.push_style(&text_style);
-    paragraph_builder.add_text("voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint ");
+    paragraph_builder
+        .add_text("voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint ");
     text_style.set_color(Color::from_rgb(0, 255, 255));
     paragraph_builder.push_style(&text_style);
     paragraph_builder.add_text("occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\n");
