@@ -14,18 +14,59 @@ struct Cli {
     dir_path: std::path::PathBuf,
     #[arg(long = "loop", default_value_t = 1)]
     loop_count: u8,
+    #[arg(long = "path")]
+    draw_path: bool,
+    #[arg(long = "raster")]
+    draw_raster: bool,
+    #[arg(long = "text")]
+    draw_text: bool,
+    #[arg(long = "svg")]
+    draw_svg: bool,
+    #[arg(long = "save")]
+    save: bool,
 }
 
 fn main() {
-    let args = Cli::parse();
+    let mut args = Cli::parse();
 
-    let raster_path = check_file_exists(args.dir_path.join("mars.jpg"));
-    let svg_path = check_file_exists(args.dir_path.join("pinocchio.svg"));
-    let font_path = check_file_exists(args.dir_path.join("Adigiana_Ultra.ttf"));
-    let output_path = args.dir_path.join("output-rust.png");
+    if !(args.draw_path || args.draw_raster || args.draw_text || args.draw_svg || args.save) {
+        args.draw_path = true;
+        args.draw_raster = true;
+        args.draw_text = true;
+        args.draw_svg = true;
+        args.save = true;
+    }
 
     for _ in 0..args.loop_count {
-        performance_test(&raster_path, &svg_path, &font_path, &output_path);
+        performance_test(&args.dir_path, args.draw_path, args.draw_raster, args.draw_text, args.draw_svg, args.save);
+    }
+}
+
+fn performance_test(working_path: &PathBuf, path: bool, raster: bool, text: bool, svg: bool, save: bool) {
+    if let Some(mut surface) = surfaces::raster_n32_premul((2048, 2048)) {
+        let mut paint = Paint::default();
+        paint.set_anti_alias(true);
+        let canvas = surface.canvas();
+        canvas.clear(Color::WHITE);
+        if path {
+            draw_path(canvas, &mut paint);
+        }
+        if raster {
+            let raster_path = check_file_exists(working_path.join("mars.jpg"));
+            draw_raster(canvas, &mut paint, &raster_path);
+        }
+        if text {
+            let font_path = check_file_exists(working_path.join("Adigiana_Ultra.ttf"));
+            draw_text(canvas, &font_path);
+        }
+        if svg {
+            let svg_path = check_file_exists(working_path.join("pinocchio.svg"));
+            draw_svg(canvas, &svg_path);
+        }
+        if save {
+            let output_path = working_path.join("output-rust.png");
+            save_to_png(&mut surface, &output_path);
+        }
     }
 }
 
@@ -34,20 +75,6 @@ fn check_file_exists(path: PathBuf) -> PathBuf {
         panic!("File doesn't exist: {:?}", path);
     }
     path
-}
-
-fn performance_test(raster_path: &PathBuf, svg_path: &PathBuf, font_path: &PathBuf, output_path: &PathBuf) {
-    if let Some(mut surface) = surfaces::raster_n32_premul((2048, 2048)) {
-        let mut paint = Paint::default();
-        paint.set_anti_alias(true);
-        let canvas = surface.canvas();
-        canvas.clear(Color::WHITE);
-        draw_path(canvas, &mut paint);
-        draw_raster(canvas, &mut paint, raster_path);
-        draw_text(canvas, font_path);
-        draw_svg(canvas, svg_path);
-        save_to_png(&mut surface, output_path);
-    }
 }
 
 fn draw_path(canvas: &mut Canvas, paint: &mut Paint) {
