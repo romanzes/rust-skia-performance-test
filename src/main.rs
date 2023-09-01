@@ -1,12 +1,13 @@
 #![allow(unused)]
 
 use clap::Parser;
-use skia_safe::{surfaces, Canvas, Color, Data, EncodedImageFormat, Paint, Path as SkPath, Surface, Image, Typeface};
+use skia_safe::{surfaces, Canvas, Color, Data, EncodedImageFormat, Paint, Path as SkPath, Surface, Image, Typeface, SamplingOptions, FilterMode, MipmapMode, CubicResampler, Rect};
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use skia_safe::svg::Dom;
 use skia_safe::textlayout::{FontCollection, ParagraphBuilder, ParagraphStyle, TextStyle, TypefaceFontProvider};
+use skia_safe::canvas::SrcRectConstraint;
 
 const CANVAS_SIZE: i32 = 512;
 
@@ -115,7 +116,8 @@ fn draw_raster(canvas: &mut Canvas, paint: &mut Paint, raster_path: &PathBuf) {
     canvas.scale((0.05, 0.05));
     if let Ok(bitmap_data) = data_from_file_path(raster_path) {
         if let Some(bitmap) = Image::from_encoded(bitmap_data) {
-            canvas.draw_image(bitmap, (0.0, 0.0), Some(paint));
+            let rect = Rect::from_wh(bitmap.width() as f32, bitmap.height() as f32);
+            canvas.draw_image_rect_with_sampling_options(bitmap, Some((&rect, SrcRectConstraint::Fast)), &rect, SamplingOptions::new(FilterMode::Linear, MipmapMode::Linear), &paint);
         }
     }
     canvas.restore();
