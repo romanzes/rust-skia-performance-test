@@ -21,7 +21,7 @@ struct Cli {
     #[arg(long = "dir")]
     dir_path: std::path::PathBuf,
     #[arg(long = "loop", default_value_t = 1)]
-    loop_count: u8,
+    loop_count: u16,
     #[arg(long = "path")]
     draw_path: bool,
     #[arg(long = "raster")]
